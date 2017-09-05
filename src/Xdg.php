@@ -15,11 +15,42 @@ class Xdg
     const RUNTIME_DIR_FALLBACK = 'php-xdg-runtime-dir-fallback-';
 
     /**
+     * @var array
+     */
+    private static $envKeys = array(
+        'USER',
+        'HOME',
+        'HOMEDRIVE',
+        'HOMEPATH',
+        'XDG_CONFIG_HOME',
+        'XDG_DATA_HOME',
+        'XDG_CACHE_HOME',
+        'XDG_CONFIG_DIRS',
+        'XDG_DATA_DIRS',
+        'XDG_RUNTIME_DIR',
+    );
+
+    /**
+     * @var array
+     */
+    private $env = array();
+
+    /**
+     * @param array $env
+     */
+    public function __construct(array $env = array())
+    {
+        foreach (self::$envKeys as $key) {
+            $this->env[$key] = array_key_exists($key, $env) ? (string)$env[$key] : getenv($key);
+        }
+    }
+
+    /**
      * @return string
      */
     public function getHomeDir()
     {
-        return getenv('HOME') ?: (getenv('HOMEDRIVE') . DIRECTORY_SEPARATOR . getenv('HOMEPATH'));
+        return $this->getEnv('HOME') ?: ($this->getEnv('HOMEDRIVE') . DIRECTORY_SEPARATOR . $this->getEnv('HOMEPATH'));
     }
 
     /**
@@ -27,7 +58,7 @@ class Xdg
      */
     public function getHomeConfigDir()
     {
-        $path = getenv('XDG_CONFIG_HOME') ?: $this->getHomeDir() . DIRECTORY_SEPARATOR . '.config';
+        $path = $this->getEnv('XDG_CONFIG_HOME') ?: $this->getHomeDir() . DIRECTORY_SEPARATOR . '.config';
 
         return $path;
     }
@@ -37,7 +68,7 @@ class Xdg
      */
     public function getHomeDataDir()
     {
-        $path = getenv('XDG_DATA_HOME') ?: $this->getHomeDir() . DIRECTORY_SEPARATOR . '.local' . DIRECTORY_SEPARATOR . 'share';
+        $path = $this->getEnv('XDG_DATA_HOME') ?: $this->getHomeDir() . DIRECTORY_SEPARATOR . '.local' . DIRECTORY_SEPARATOR . 'share';
 
         return $path;
     }
@@ -47,7 +78,7 @@ class Xdg
      */
     public function getConfigDirs()
     {
-        $configDirs = getenv('XDG_CONFIG_DIRS') ? explode(':', getenv('XDG_CONFIG_DIRS')) : array('/etc/xdg');
+        $configDirs = $this->getEnv('XDG_CONFIG_DIRS') ? explode(':', $this->getEnv('XDG_CONFIG_DIRS')) : array('/etc/xdg');
 
         $paths = array_merge(array($this->getHomeConfigDir()), $configDirs);
 
@@ -59,7 +90,7 @@ class Xdg
      */
     public function getDataDirs()
     {
-        $dataDirs = getenv('XDG_DATA_DIRS') ? explode(':', getenv('XDG_DATA_DIRS')) : array('/usr/local/share', '/usr/share');
+        $dataDirs = $this->getEnv('XDG_DATA_DIRS') ? explode(':', $this->getEnv('XDG_DATA_DIRS')) : array('/usr/local/share', '/usr/share');
 
         $paths = array_merge(array($this->getHomeDataDir()), $dataDirs);
 
@@ -71,15 +102,28 @@ class Xdg
      */
     public function getHomeCacheDir()
     {
-        $path = getenv('XDG_CACHE_HOME') ?: $this->getHomeDir() . DIRECTORY_SEPARATOR . '.cache';
+        $path = $this->getEnv('XDG_CACHE_HOME') ?: $this->getHomeDir() . DIRECTORY_SEPARATOR . '.cache';
 
         return $path;
-
     }
 
-    public function getRuntimeDir($strict=true)
+    /**
+     * @param $name
+     * @return bool
+     */
+    private function getEnv($name)
     {
-        if ($runtimeDir = getenv('XDG_RUNTIME_DIR')) {
+        return isset($this->env[$name]) ? $this->env[$name] : false;
+    }
+
+    /**
+     * @param bool $strict
+     * @return string
+     * @throws \RuntimeException
+     */
+    public function getRuntimeDir($strict = true)
+    {
+        if ($runtimeDir = $this->getEnv('XDG_RUNTIME_DIR')) {
             return $runtimeDir;
         }
 
@@ -87,7 +131,7 @@ class Xdg
             throw new \RuntimeException('XDG_RUNTIME_DIR was not set');
         }
 
-        $fallback = sys_get_temp_dir() . DIRECTORY_SEPARATOR . self::RUNTIME_DIR_FALLBACK . getenv('USER');
+        $fallback = sys_get_temp_dir() . DIRECTORY_SEPARATOR . self::RUNTIME_DIR_FALLBACK . $this->getEnv('USER');
 
         $create = false;
 
@@ -114,7 +158,7 @@ class Xdg
 
         return $fallback;
     }
-
+    
     private function getUid()
     {
         if (function_exists('posix_getuid')) {
@@ -123,6 +167,4 @@ class Xdg
 
         return getmyuid();
     }
-
-
 }

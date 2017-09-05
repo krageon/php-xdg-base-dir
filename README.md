@@ -10,7 +10,7 @@ Implementation of XDG Base Directory  specification for php
 Via Composer
 
 ``` bash
-$ composer require dnoegel/php-xdg-base-dir
+$ composer require krageon/php-xdg-base-dir
 ```
 
 ## Usage
@@ -36,4 +36,4 @@ $ phpunit
 
 ## License
 
-The MIT License (MIT). Please see [License File](https://github.com/dnoegel/php-xdg-base-dir/blob/master/LICENSE) for more information.
+The MIT License (MIT). Please see [License File](https://github.com/krageon/php-xdg-base-dir/blob/master/LICENSE) for more information.
